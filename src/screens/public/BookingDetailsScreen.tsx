@@ -1,10 +1,25 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image, Modal, TextInput, Alert } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Booking } from '../../context/BookingContext';
+import { Booking, useBooking } from '../../context/BookingContext';
 
 export default function BookingDetailsScreen({ route, navigation }: any) {
   const { booking } = route.params || {};
+  const { cancelBooking } = useBooking();
+  const [isCancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+
+  const handleCancelBooking = () => {
+    if (!cancelReason.trim()) {
+      Alert.alert('Reason Required', 'Please provide a reason for cancelling your booking.');
+      return;
+    }
+    cancelBooking(booking.id, cancelReason);
+    setCancelModalVisible(false);
+    Alert.alert('Booking Cancelled', 'Your booking has been successfully cancelled.', [
+      { text: 'OK', onPress: () => navigation.goBack() }
+    ]);
+  };
 
   if (!booking) {
     return (
@@ -38,8 +53,10 @@ export default function BookingDetailsScreen({ route, navigation }: any) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
         <View style={styles.statusContainer}>
-          <Feather name="check-circle" size={48} color="#2E7D32" style={{ marginBottom: 16 }} />
-          <Text style={styles.statusTitle}>Booking Confirmed</Text>
+          <Feather name={typedBooking.status === 'Cancelled' ? "x-circle" : "check-circle"} size={48} color={typedBooking.status === 'Cancelled' ? "#D32F2F" : "#2E7D32"} style={{ marginBottom: 16 }} />
+          <Text style={[styles.statusTitle, typedBooking.status === 'Cancelled' && { color: '#D32F2F' }]}>
+            {typedBooking.status === 'Cancelled' ? 'Booking Cancelled' : 'Booking Confirmed'}
+          </Text>
           <Text style={styles.bookingId}>Booking ID: {typedBooking.id.toUpperCase()}</Text>
         </View>
 
@@ -71,8 +88,8 @@ export default function BookingDetailsScreen({ route, navigation }: any) {
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Status</Text>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{typedBooking.status}</Text>
+            <View style={[styles.statusBadge, typedBooking.status === 'Cancelled' && styles.statusBadgeCancelled]}>
+              <Text style={[styles.statusText, typedBooking.status === 'Cancelled' && styles.statusTextCancelled]}>{typedBooking.status}</Text>
             </View>
           </View>
         </View>
@@ -104,7 +121,48 @@ export default function BookingDetailsScreen({ route, navigation }: any) {
           <Text style={styles.secondaryButtonText}>Contact Support</Text>
         </TouchableOpacity>
 
+        {typedBooking.status !== 'Cancelled' && (
+          <TouchableOpacity 
+            style={[styles.secondaryButton, { borderColor: '#d32f2f', borderWidth: 1, marginTop: 12 }]}
+            onPress={() => setCancelModalVisible(true)}
+          >
+            <Text style={[styles.secondaryButtonText, { color: '#d32f2f' }]}>Cancel Booking</Text>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
+
+      <Modal
+        visible={isCancelModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCancelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Cancel Booking</Text>
+              <TouchableOpacity onPress={() => setCancelModalVisible(false)}>
+                <Feather name="x" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>Please let us know why you are cancelling this booking.</Text>
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Enter your reason here..."
+              multiline
+              numberOfLines={4}
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              textAlignVertical="top"
+            />
+            <TouchableOpacity style={styles.confirmCancelButton} onPress={handleCancelBooking}>
+              <Text style={styles.confirmCancelButtonText}>Confirm Cancellation</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -274,5 +332,59 @@ const styles = StyleSheet.create({
     color: '#1E3B20',
     fontSize: 16,
     fontWeight: '700',
+  },
+  confirmCancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E3B20',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+  },
+  reasonInput: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    padding: 16,
+    height: 120,
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 24,
+  },
+  confirmCancelButton: {
+    backgroundColor: '#d32f2f',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  statusBadgeCancelled: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusTextCancelled: {
+    color: '#D32F2F',
   }
 });

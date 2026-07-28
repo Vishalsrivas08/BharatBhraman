@@ -14,6 +14,7 @@ export interface Booking {
 interface BookingContextType {
   bookings: Booking[];
   addBooking: (booking: Omit<Booking, 'id' | 'date' | 'status'>) => void;
+  cancelBooking: (id: string, reason: string) => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -31,8 +32,14 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     setBookings((prev) => [newBooking, ...prev]);
   };
 
+  const cancelBooking = (id: string, reason: string) => {
+    setBookings((prev) => 
+      prev.map(b => b.id === id ? { ...b, status: 'Cancelled' as const } : b)
+    );
+  };
+
   return (
-    <BookingContext.Provider value={{ bookings, addBooking }}>
+    <BookingContext.Provider value={{ bookings, addBooking, cancelBooking }}>
       {children}
     </BookingContext.Provider>
   );

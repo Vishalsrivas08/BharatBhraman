@@ -21,8 +21,8 @@ export default function BookingsScreen({ navigation }: any) {
 
         <View style={styles.detailsRow}>
           <Text style={styles.priceText}>{item.price}</Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{item.status}</Text>
+          <View style={[styles.statusBadge, item.status === 'Cancelled' && styles.statusBadgeCancelled]}>
+            <Text style={[styles.statusText, item.status === 'Cancelled' && styles.statusTextCancelled]}>{item.status}</Text>
           </View>
         </View>
 
@@ -145,5 +145,11 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 10,
     color: '#999',
+  },
+  statusBadgeCancelled: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusTextCancelled: {
+    color: '#D32F2F',
   },
 });

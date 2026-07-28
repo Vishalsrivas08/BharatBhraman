@@ -73,7 +73,7 @@ export default function CheckoutScreen({ route, navigation }: any) {
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="John Doe"
+              placeholder="Enter Full Name"
               value={name}
               onChangeText={setName}
             />
@@ -83,7 +83,7 @@ export default function CheckoutScreen({ route, navigation }: any) {
             <Text style={styles.inputLabel}>Email Address</Text>
             <TextInput
               style={styles.input}
-              placeholder="john@example.com"
+              placeholder="username@example.com"
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -95,7 +95,7 @@ export default function CheckoutScreen({ route, navigation }: any) {
             <Text style={styles.inputLabel}>Phone Number</Text>
             <TextInput
               style={styles.input}
-              placeholder="+91 98765 43210"
+              placeholder="Enter Phone Number"
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}

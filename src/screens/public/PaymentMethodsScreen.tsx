@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
@@ -8,10 +8,49 @@ export default function PaymentMethodsScreen({ navigation }: any) {
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardName, setCardName] = useState('');
+
+  const expiryRef = useRef<TextInput>(null);
+  const cvvRef = useRef<TextInput>(null);
+
   const [savedCards, setSavedCards] = useState([
     { id: '1', type: 'Visa', bank: 'HDFC Bank', number: '**** **** **** 4242', isDefault: true },
     { id: '2', type: 'Mastercard', bank: 'ICICI Bank', number: '**** **** **** 8899', isDefault: false },
   ]);
+
+  const handleCardNumberChange = (text: string) => {
+    if (text.length < cardNumber.length) {
+      setCardNumber(text);
+      return;
+    }
+    const cleaned = text.replace(/[^0-9]/g, '');
+    const match = cleaned.match(/.{1,4}/g);
+    let formatted = cleaned;
+    if (match) {
+      formatted = match.join('-');
+    }
+    setCardNumber(formatted);
+    if (formatted.length === 19) {
+      expiryRef.current?.focus();
+    }
+  };
+
+  const handleExpiryChange = (text: string) => {
+    if (text.length < expiry.length) {
+      setExpiry(text);
+      return;
+    }
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 2) {
+      formatted = cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
+    } else if (cleaned.length === 2) {
+      formatted = cleaned + '/';
+    }
+    setExpiry(formatted);
+    if (formatted.length === 5) {
+      cvvRef.current?.focus();
+    }
+  };
 
   const handleAddCard = () => {
     if (!cardNumber || !expiry || !cvv || !cardName) {
@@ -65,7 +104,7 @@ export default function PaymentMethodsScreen({ navigation }: any) {
           {showAddCard ? (
             <View style={styles.addCardSection}>
               <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionTitle}>Add New Card</Text>
+                <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Add New Card</Text>
                 <TouchableOpacity onPress={() => setShowAddCard(false)}>
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
@@ -76,7 +115,7 @@ export default function PaymentMethodsScreen({ navigation }: any) {
                   <Text style={styles.label}>Name on Card</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Rahul Sharma"
+                    placeholder="Enter Full Name"
                     value={cardName}
                     onChangeText={setCardName}
                   />
@@ -86,11 +125,11 @@ export default function PaymentMethodsScreen({ navigation }: any) {
                   <Text style={styles.label}>Card Number</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="XXXX XXXX XXXX XXXX"
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
                     keyboardType="number-pad"
                     maxLength={19}
                     value={cardNumber}
-                    onChangeText={setCardNumber}
+                    onChangeText={handleCardNumberChange}
                   />
                 </View>
 
@@ -98,22 +137,24 @@ export default function PaymentMethodsScreen({ navigation }: any) {
                   <View style={[styles.inputGroup, { flex: 1, marginRight: 16 }]}>
                     <Text style={styles.label}>Expiry Date</Text>
                     <TextInput
+                      ref={expiryRef}
                       style={styles.input}
                       placeholder="MM/YY"
                       keyboardType="number-pad"
                       maxLength={5}
                       value={expiry}
-                      onChangeText={setExpiry}
+                      onChangeText={handleExpiryChange}
                     />
                   </View>
                   <View style={[styles.inputGroup, { flex: 1 }]}>
                     <Text style={styles.label}>CVV</Text>
                     <TextInput
+                      ref={cvvRef}
                       style={styles.input}
                       placeholder="XXX"
                       keyboardType="number-pad"
                       secureTextEntry
-                      maxLength={4}
+                      maxLength={3}
                       value={cvv}
                       onChangeText={setCvv}
                     />

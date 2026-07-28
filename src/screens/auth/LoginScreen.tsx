@@ -262,7 +262,8 @@ const styles = StyleSheet.create({
     letterSpacing: 12,
     textTransform: 'uppercase',
     marginTop: 6,
-    marginLeft: 12,
+    marginLeft: 1,
+    marginRight: 10,
   },
   card: {
     backgroundColor: 'rgba(255, 255, 255, 0.12)',

@@ -16,6 +16,9 @@ export default function PaymentScreen({ route, navigation }: any) {
 
   const { addBooking } = useBooking();
 
+  const expiryRef = useRef<TextInput>(null);
+  const cvvRef = useRef<TextInput>(null);
+
   const [showToast, setShowToast] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const toastTranslateY = useRef(new Animated.Value(20)).current;
@@ -76,6 +79,41 @@ export default function PaymentScreen({ route, navigation }: any) {
     }, 2000);
   };
 
+  const handleExpiryChange = (text: string) => {
+    if (text.length < expiry.length) {
+      setExpiry(text);
+      return;
+    }
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 2) {
+      formatted = cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
+    } else if (cleaned.length === 2) {
+      formatted = cleaned + '/';
+    }
+    setExpiry(formatted);
+    if (formatted.length === 5) {
+      cvvRef.current?.focus();
+    }
+  };
+
+  const handleCardNumberChange = (text: string) => {
+    if (text.length < cardNumber.length) {
+      setCardNumber(text);
+      return;
+    }
+    const cleaned = text.replace(/[^0-9]/g, '');
+    const match = cleaned.match(/.{1,4}/g);
+    let formatted = cleaned;
+    if (match) {
+      formatted = match.join('-');
+    }
+    setCardNumber(formatted);
+    if (formatted.length === 19) {
+      expiryRef.current?.focus();
+    }
+  };
+
   const renderCardForm = () => (
     <Animated.View style={styles.formContainer}>
       <View style={styles.inputContainer}>
@@ -83,10 +121,10 @@ export default function PaymentScreen({ route, navigation }: any) {
         <View style={styles.inputWrapper}>
           <TextInput
             style={[styles.input, { flex: 1, borderWidth: 0 }]}
-            placeholder="0000 0000 0000 0000"
+            placeholder="0000-0000-0000-0000"
             keyboardType="numeric"
             value={cardNumber}
-            onChangeText={setCardNumber}
+            onChangeText={handleCardNumberChange}
             maxLength={19}
           />
           <Feather name="credit-card" size={20} color="#999" style={{ marginRight: 12 }} />
@@ -98,11 +136,13 @@ export default function PaymentScreen({ route, navigation }: any) {
           <Text style={styles.inputLabel}>Expiry Date</Text>
           <View style={styles.inputWrapper}>
             <TextInput
+              ref={expiryRef}
               style={[styles.input, { flex: 1, borderWidth: 0 }]}
               placeholder="MM/YY"
               value={expiry}
-              onChangeText={setExpiry}
+              onChangeText={handleExpiryChange}
               maxLength={5}
+              keyboardType="numeric"
             />
           </View>
         </View>
@@ -111,6 +151,7 @@ export default function PaymentScreen({ route, navigation }: any) {
           <Text style={styles.inputLabel}>CVV</Text>
           <View style={styles.inputWrapper}>
             <TextInput
+              ref={cvvRef}
               style={[styles.input, { flex: 1, borderWidth: 0 }]}
               placeholder="123"
               keyboardType="numeric"
