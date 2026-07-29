@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -19,10 +19,212 @@ const MOCK_TOP_PROPERTIES = [
   { id: '3', name: 'Evolve Back Kabini', bookings: 86, revenue: '₹1,95,000' },
 ];
 
+const MOCK_RECENT_BOOKINGS = [
+  { id: 'B101', user: 'Rahul Sharma', property: 'Taj Mahua Kothi', status: 'Confirmed', date: 'Oct 24, 2023', amount: '₹12,500' },
+  { id: 'B102', user: 'Priya Patel', property: 'The Serai Bandipur', status: 'Pending', date: 'Oct 23, 2023', amount: '₹8,200' },
+  { id: 'B103', user: 'Amit Kumar', property: 'Evolve Back Kabini', status: 'Cancelled', date: 'Oct 22, 2023', amount: '₹15,000' },
+  { id: 'B104', user: 'Sneha Gupta', property: 'Taj Mahua Kothi', status: 'Confirmed', date: 'Oct 21, 2023', amount: '₹12,500' },
+];
+
+const MOCK_RECENT_USERS = [
+  { id: 'U1', name: 'Vikram Singh', email: 'vikram.s@example.com', joinDate: 'Oct 24, 2023', status: 'Active' },
+  { id: 'U2', name: 'Neha Reddy', email: 'neha.r@example.com', joinDate: 'Oct 23, 2023', status: 'Active' },
+  { id: 'U3', name: 'Karan Malhotra', email: 'karan.m@example.com', joinDate: 'Oct 22, 2023', status: 'Inactive' },
+  { id: 'U4', name: 'Riya Desai', email: 'riya.d@example.com', joinDate: 'Oct 21, 2023', status: 'Active' },
+];
+
 export default function AdminReportsScreen({ navigation }: any) {
   const [activeTab, setActiveTab] = useState('Revenue');
 
   const maxRevenue = Math.max(...MOCK_REVENUE_DATA.map(d => d.revenue));
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Confirmed': return '#16A34A';
+      case 'Pending': return '#D97706';
+      case 'Cancelled': return '#DC2626';
+      case 'Active': return '#16A34A';
+      case 'Inactive': return '#6B7280';
+      default: return '#6B7280';
+    }
+  };
+
+  const getStatusBgColor = (status: string) => {
+    switch (status) {
+      case 'Confirmed': return '#F0FDF4';
+      case 'Pending': return '#FEF3C7';
+      case 'Cancelled': return '#FEF2F2';
+      case 'Active': return '#F0FDF4';
+      case 'Inactive': return '#F3F4F6';
+      default: return '#F3F4F6';
+    }
+  };
+
+  const renderRevenueTab = () => (
+    <>
+      <View style={styles.summaryGrid}>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryIconContainer}>
+            <Feather name="dollar-sign" size={20} color="#2563EB" />
+          </View>
+          <Text style={styles.summaryTitle}>Total Revenue</Text>
+          <Text style={styles.summaryValue}>₹34.5L</Text>
+          <Text style={styles.summaryTrend}>+12.5% from last month</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#F0FDF4' }]}>
+            <Feather name="trending-up" size={20} color="#16A34A" />
+          </View>
+          <Text style={styles.summaryTitle}>Avg. Order Value</Text>
+          <Text style={styles.summaryValue}>₹18.2K</Text>
+          <Text style={styles.summaryTrend}>+4.2% from last month</Text>
+        </View>
+      </View>
+
+      <View style={styles.chartSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Revenue Overview (6 Months)</Text>
+        </View>
+        
+        <View style={styles.chartContainer}>
+          {MOCK_REVENUE_DATA.map((data, index) => {
+            const barHeight = (data.revenue / maxRevenue) * 150;
+            return (
+              <View key={index} style={styles.barCol}>
+                <Text style={styles.barValue}>{(data.revenue / 1000)}k</Text>
+                <View style={[styles.bar, { height: barHeight }]} />
+                <Text style={styles.barLabel}>{data.month}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.performersSection}>
+        <Text style={styles.sectionTitle}>Top Performing Properties</Text>
+        <View style={styles.performersCard}>
+          {MOCK_TOP_PROPERTIES.map((prop, index) => (
+            <View key={prop.id}>
+              <View style={styles.performerRow}>
+                <View style={styles.performerRank}>
+                  <Text style={styles.performerRankText}>#{index + 1}</Text>
+                </View>
+                <View style={styles.performerDetails}>
+                  <Text style={styles.performerName}>{prop.name}</Text>
+                  <Text style={styles.performerStats}>{prop.bookings} Bookings</Text>
+                </View>
+                <Text style={styles.performerRevenue}>{prop.revenue}</Text>
+              </View>
+              {index < MOCK_TOP_PROPERTIES.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderBookingsTab = () => (
+    <>
+      <View style={styles.summaryGrid}>
+        <View style={styles.summaryCard}>
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#EEF2FF' }]}>
+            <Feather name="calendar" size={20} color="#4F46E5" />
+          </View>
+          <Text style={styles.summaryTitle}>Total Bookings</Text>
+          <Text style={styles.summaryValue}>1,245</Text>
+          <Text style={styles.summaryTrend}>+15.2% from last month</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#FEF2F2' }]}>
+            <Feather name="x-circle" size={20} color="#DC2626" />
+          </View>
+          <Text style={styles.summaryTitle}>Cancellation Rate</Text>
+          <Text style={styles.summaryValue}>4.2%</Text>
+          <Text style={[styles.summaryTrend, { color: '#16A34A' }]}>-1.1% from last month</Text>
+        </View>
+      </View>
+
+      <View style={styles.performersSection}>
+        <Text style={styles.sectionTitle}>Recent Bookings</Text>
+        <View style={styles.performersCard}>
+          {MOCK_RECENT_BOOKINGS.map((booking, index) => (
+            <View key={booking.id}>
+              <View style={styles.recentRow}>
+                <View style={styles.recentDetails}>
+                  <Text style={styles.recentName}>{booking.user}</Text>
+                  <Text style={styles.recentSubText}>{booking.property}</Text>
+                  <Text style={styles.recentDate}>{booking.date}</Text>
+                </View>
+                <View style={styles.recentRight}>
+                  <Text style={styles.recentAmount}>{booking.amount}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(booking.status) }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>{booking.status}</Text>
+                  </View>
+                </View>
+              </View>
+              {index < MOCK_RECENT_BOOKINGS.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+        </View>
+      </View>
+    </>
+  );
+
+  const renderUsersTab = () => (
+    <>
+      <View style={styles.summaryGrid}>
+        <View style={styles.summaryCard}>
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#F5F3FF' }]}>
+            <Feather name="users" size={20} color="#7C3AED" />
+          </View>
+          <Text style={styles.summaryTitle}>Total Users</Text>
+          <Text style={styles.summaryValue}>12,450</Text>
+          <Text style={styles.summaryTrend}>+8.4% from last month</Text>
+        </View>
+        <View style={styles.summaryCard}>
+          <View style={[styles.summaryIconContainer, { backgroundColor: '#ECFEFF' }]}>
+            <Feather name="user-check" size={20} color="#0891B2" />
+          </View>
+          <Text style={styles.summaryTitle}>Active Users</Text>
+          <Text style={styles.summaryValue}>3,450</Text>
+          <Text style={styles.summaryTrend}>+12.1% from last month</Text>
+        </View>
+      </View>
+
+      <View style={styles.performersSection}>
+        <Text style={styles.sectionTitle}>Recent Registrations</Text>
+        <View style={styles.performersCard}>
+          {MOCK_RECENT_USERS.map((user, index) => (
+            <View key={user.id}>
+              <View style={styles.recentRow}>
+                <View style={styles.recentAvatar}>
+                  <Text style={styles.recentAvatarText}>{user.name.charAt(0)}</Text>
+                </View>
+                <View style={styles.recentDetails}>
+                  <Text style={styles.recentName}>{user.name}</Text>
+                  <Text style={styles.recentSubText}>{user.email}</Text>
+                  <Text style={styles.recentDate}>Joined {user.joinDate}</Text>
+                </View>
+                <View style={styles.recentRight}>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(user.status) }]}>
+                    <Text style={[styles.statusText, { color: getStatusColor(user.status) }]}>{user.status}</Text>
+                  </View>
+                </View>
+              </View>
+              {index < MOCK_RECENT_USERS.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+        </View>
+      </View>
+    </>
+  );
+
+  const getHeaderTitle = () => {
+    if (activeTab === 'Revenue') return 'Financial Reports';
+    if (activeTab === 'Bookings') return 'Booking Reports';
+    if (activeTab === 'Users') return 'User Reports';
+    return 'Reports';
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -30,8 +232,11 @@ export default function AdminReportsScreen({ navigation }: any) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Feather name="arrow-left" size={24} color="#1E3B20" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Financial Reports</Text>
-        <TouchableOpacity style={styles.exportBtn}>
+        <Text style={styles.headerTitle}>{getHeaderTitle()}</Text>
+        <TouchableOpacity 
+          style={styles.exportBtn}
+          onPress={() => Alert.alert('Report Exported', 'Your report will be sent to your registered email address shortly.')}
+        >
           <Feather name="download" size={20} color="#1E3B20" />
         </TouchableOpacity>
       </View>
@@ -49,69 +254,10 @@ export default function AdminReportsScreen({ navigation }: any) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+        {activeTab === 'Revenue' && renderRevenueTab()}
+        {activeTab === 'Bookings' && renderBookingsTab()}
+        {activeTab === 'Users' && renderUsersTab()}
         
-        {/* Summary Cards */}
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryIconContainer}>
-              <Feather name="dollar-sign" size={20} color="#2563EB" />
-            </View>
-            <Text style={styles.summaryTitle}>Total Revenue</Text>
-            <Text style={styles.summaryValue}>₹34.5L</Text>
-            <Text style={styles.summaryTrend}>+12.5% from last month</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <View style={[styles.summaryIconContainer, { backgroundColor: '#F0FDF4' }]}>
-              <Feather name="trending-up" size={20} color="#16A34A" />
-            </View>
-            <Text style={styles.summaryTitle}>Avg. Order Value</Text>
-            <Text style={styles.summaryValue}>₹18.2K</Text>
-            <Text style={styles.summaryTrend}>+4.2% from last month</Text>
-          </View>
-        </View>
-
-        {/* Chart Section */}
-        <View style={styles.chartSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Revenue Overview (6 Months)</Text>
-          </View>
-          
-          <View style={styles.chartContainer}>
-            {MOCK_REVENUE_DATA.map((data, index) => {
-              const barHeight = (data.revenue / maxRevenue) * 150;
-              return (
-                <View key={index} style={styles.barCol}>
-                  <Text style={styles.barValue}>{(data.revenue / 1000)}k</Text>
-                  <View style={[styles.bar, { height: barHeight }]} />
-                  <Text style={styles.barLabel}>{data.month}</Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Top Performers Section */}
-        <View style={styles.performersSection}>
-          <Text style={styles.sectionTitle}>Top Performing Properties</Text>
-          <View style={styles.performersCard}>
-            {MOCK_TOP_PROPERTIES.map((prop, index) => (
-              <View key={prop.id}>
-                <View style={styles.performerRow}>
-                  <View style={styles.performerRank}>
-                    <Text style={styles.performerRankText}>#{index + 1}</Text>
-                  </View>
-                  <View style={styles.performerDetails}>
-                    <Text style={styles.performerName}>{prop.name}</Text>
-                    <Text style={styles.performerStats}>{prop.bookings} Bookings</Text>
-                  </View>
-                  <Text style={styles.performerRevenue}>{prop.revenue}</Text>
-                </View>
-                {index < MOCK_TOP_PROPERTIES.length - 1 && <View style={styles.divider} />}
-              </View>
-            ))}
-          </View>
-        </View>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -319,5 +465,60 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#F3F4F6',
+  },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  recentDetails: {
+    flex: 1,
+  },
+  recentName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  recentSubText: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  recentDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  recentRight: {
+    alignItems: 'flex-end',
+  },
+  recentAmount: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  recentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E0E7FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  recentAvatarText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4F46E5',
   },
 });
